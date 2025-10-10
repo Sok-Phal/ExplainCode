@@ -26,6 +26,32 @@ const ChatApp = (() => {
   let showArchived = false;
   let editor;
 
+  // Performance optimization utilities
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+  
+  function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+      const args = arguments;
+      const context = this;
+      if (!inThrottle) {
+        func.apply(context, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    }
+  }
+
   // Initialize Puter JS
   async function initializePuter() {
     return new Promise((resolve) => {
@@ -96,6 +122,9 @@ const ChatApp = (() => {
       matchBrackets: true,
       keyMap: "sublime",
       viewportMargin: Infinity,
+      lineNumbers: false,
+      foldGutter: false,
+      gutters: [],
       extraKeys: {
         'Enter': (cm) => {
           if (!cm.state.completionActive && !event.shiftKey) {
@@ -129,6 +158,9 @@ const ChatApp = (() => {
         setTimeout(() => {
           loadConversation(lastConversation.id);
         }, 0);
+      } else {
+        // If no valid conversation found, show welcome message
+        showWelcomeMessage();
       }
     }
     
@@ -189,11 +221,19 @@ const ChatApp = (() => {
       selection.removeAllRanges();
       selection.addRange(range);
     });
-    sidebarToggle?.addEventListener("click", () => appContainer.classList.toggle("sidebar-visible"));
+    sidebarToggle?.addEventListener("click", () => {
+      if (window.innerWidth <= 768) {
+        // Mobile behavior: toggle sidebar visibility
+        appContainer.classList.toggle("sidebar-visible");
+      } else {
+        // Desktop behavior: toggle sidebar collapse
+        appContainer.classList.toggle("sidebar-collapsed");
+      }
+    });
     document.getElementById('toggle-history')?.addEventListener("click", toggleHistorySection);
     newConversationBtn?.addEventListener("click", createNewConversation);
     sendBtn?.addEventListener("click", sendMessage);
-    searchInput?.addEventListener("input", () => renderConversationList());
+    searchInput?.addEventListener("input", debounce(() => renderConversationList(), 300));
     toggleArchivedBtn?.addEventListener("click", () => {
         showArchived = !showArchived;
         toggleArchivedBtn.setAttribute("data-active", showArchived);
@@ -209,7 +249,7 @@ const ChatApp = (() => {
         setTheme(currentTheme === "dark" ? "light" : "dark");
     });
 
-    editor.on('change', () => {
+    editor.on('change', throttle(() => {
         const wrapper = editor.getWrapperElement();
         const scroller = editor.getScrollerElement();
         if (scroller.scrollHeight > wrapper.clientHeight) {
@@ -218,6 +258,20 @@ const ChatApp = (() => {
             wrapper.classList.remove('has-scrollbar');
         }
         updateSendButtonState();
+    }, 100));
+
+    // Handle window resize to switch between mobile and desktop behavior
+    window.addEventListener("resize", () => {
+      if (window.innerWidth <= 768) {
+        // Switch to mobile behavior
+        appContainer.classList.remove("sidebar-collapsed");
+        if (!appContainer.classList.contains("sidebar-visible")) {
+          appContainer.classList.add("sidebar-visible");
+        }
+      } else {
+        // Switch to desktop behavior
+        appContainer.classList.remove("sidebar-visible");
+      }
     });
 
     // Close sidebar when clicking outside on mobile
@@ -683,6 +737,30 @@ const ChatApp = (() => {
   }
   
 
+  // Show welcome message when no messages exist
+  function showWelcomeMessage() {
+    const welcomeHTML = `
+      <div class="welcome-message">
+        <svg
+          viewBox="0 0 24 24"
+          width="100"
+          height="100"
+          stroke="currentColor"
+          stroke-width="1.5"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <h1>How can I help you today?</h1>
+        <p>Ask me anything or start a new conversation to begin.</p>
+      </div>
+    `;
+    messagesContainer.innerHTML = welcomeHTML;
+  }
+
   // Render messages for the current conversation
   function renderMessages() {
     const conversation = conversations.find(c => c.id === currentConversationId);
@@ -694,8 +772,9 @@ const ChatApp = (() => {
     // Clear the messages container
     messagesContainer.innerHTML = '';
 
-    // If no messages, just return after setting title
+    // If no messages, show welcome message
     if (!conversation.messages || conversation.messages.length === 0) {
+      showWelcomeMessage();
       return;
     }
 
