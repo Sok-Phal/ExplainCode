@@ -1,7 +1,6 @@
 import { state } from "./state.js";
 import { dom } from "./dom.js";
 import { debounce, throttle } from "./utils.js";
-import { waitForPuter } from "./services/puter.js";
 import { createConversationController } from "./controllers/conversations.js";
 import { createChatController } from "./controllers/chat.js";
 import { exportConversation, importConversation } from "./controllers/importExport.js";
@@ -146,14 +145,6 @@ function bindEventListeners(conversations, chat) {
 }
 
 export async function initApp() {
-  try {
-    await waitForPuter();
-  } catch (error) {
-    console.error(error);
-    showNotification(error.message, "error");
-    return;
-  }
-
   if (localStorage.getItem("historyCollapsed") === "true") {
     dom.historySection?.classList.add("collapsed");
     dom.toggleHistoryButton?.classList.add("collapsed");

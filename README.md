@@ -20,11 +20,11 @@ A web-based chat application that helps explain code snippets with markdown supp
 
 ## Project Structure
 
-The browser entry point is `puter1.js`; feature code is split into focused ES modules:
+The browser entry point is `main.js`; feature code is split into focused ES modules:
 
 - `src/app.js` — application startup and DOM event wiring
 - `src/controllers/` — conversation, chat, and import/export workflows
-- `src/services/` — browser storage and Puter AI integration
+- `src/services/` — browser storage and Groq API integration through the Cloudflare Worker
 - `src/ui/` — conversation/message rendering, markdown, theme, and notifications
 - `src/dom.js`, `src/state.js`, `src/utils.js` — shared DOM references, application state, and utilities
 
@@ -46,7 +46,9 @@ The browser entry point is `puter1.js`; feature code is split into focused ES mo
 ## Dependencies
 
 - [CodeMirror](https://codemirror.net/): Code editor component
-- [Puter](https://docs.puter.com/): Cloud storage integration (optional)
+- [Groq API](https://console.groq.com/docs): Chat completions using `openai/gpt-oss-120b`
+
+The browser sends chat requests to the configured Cloudflare Worker endpoint in `src/services/groq.js`. The Groq API key must remain configured as the worker's `EXPLAINCODE_KEY` secret; do not put it in browser code.
 
 ## Browser Support
 

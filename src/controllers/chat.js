@@ -1,4 +1,4 @@
-import { chatWithPuter } from "../services/puter.js";
+import { chatWithGroq } from "../services/groq.js";
 import { hideTypingIndicator, showTypingIndicator } from "../ui/messages.js";
 
 export function createChatController(state, elements, conversations, notify) {
@@ -20,7 +20,7 @@ export function createChatController(state, elements, conversations, notify) {
         .filter((message) => message && typeof message === "object" && message.role && "content" in message)
         .slice(-10)
         .map(({ role, content: messageContent }) => ({ role, content: messageContent }));
-      const response = await chatWithPuter(recentMessages);
+      const response = await chatWithGroq(recentMessages);
       conversations.addMessage({ role: "assistant", content: response, timestamp: new Date().toISOString() });
     } catch (error) {
       console.error("Error sending message:", error);
