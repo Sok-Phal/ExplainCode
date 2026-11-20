@@ -14,9 +14,19 @@ A web-based chat application that helps explain code snippets with markdown supp
 
 ## Getting Started
 
-1. Clone the repository or download the source files
-2. Open `index.html` in a modern web browser
-3. Start chatting and explaining code!
+1. Clone the repository or download the source files.
+2. Serve the project folder with a local web server (for example, VS Code Live Server). ES modules are blocked by some browsers when opening `index.html` directly as a `file://` URL.
+3. Open the served `index.html` in a modern web browser and start chatting.
+
+## Project Structure
+
+The browser entry point is `puter1.js`; feature code is split into focused ES modules:
+
+- `src/app.js` — application startup and DOM event wiring
+- `src/controllers/` — conversation, chat, and import/export workflows
+- `src/services/` — browser storage and Puter AI integration
+- `src/ui/` — conversation/message rendering, markdown, theme, and notifications
+- `src/dom.js`, `src/state.js`, `src/utils.js` — shared DOM references, application state, and utilities
 
 ## Usage
 
